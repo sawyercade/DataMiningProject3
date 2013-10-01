@@ -1,11 +1,29 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Sawyer
- * Date: 9/30/13
- * Time: 5:59 PM
- * To change this template use File | Settings | File Templates.
- */
-public class DecisionTree {
+import ml.Matrix;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-    //blahblahblah
+public class DecisionTree {
+    private DecisionTreeNode root;
+    private Matrix features;
+    private Matrix labels;
+    private int k;
+
+    public DecisionTree(final Matrix features, final Matrix labels){
+        this.features = features;
+        this.labels = labels;
+        this.root = new DecisionTreeNode(features, labels);
+    }
+
+    public DecisionTreeNode buildEntropyReducingTree(int k){
+        this.k = k;
+        throw new NotImplementedException();
+    }
+
+    public DecisionTreeNode buildRandomTree(int k){
+        this.k = k;
+        throw new NotImplementedException();
+    }
+
+    private static double calculateEntropy(Matrix labels){
+        throw new NotImplementedException();
+    }
 }
