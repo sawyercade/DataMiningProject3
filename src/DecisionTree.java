@@ -15,7 +15,8 @@ public class DecisionTree {
 
     public DecisionTreeNode buildEntropyReducingTree(int k){
         this.k = k;
-        throw new NotImplementedException();
+        this.root.splitOnEntropy(this.k);
+        return this.root;
     }
 
     public DecisionTreeNode buildRandomTree(int k){
@@ -23,7 +24,11 @@ public class DecisionTree {
         throw new NotImplementedException();
     }
 
-    private static double calculateEntropy(Matrix labels){
-        throw new NotImplementedException();
+    @Override
+    public String toString(){
+        StringBuilder output = new StringBuilder();
+        StringBuilder prefix = new StringBuilder();
+        return this.root.treeToString(output, prefix, "");
     }
+
 }

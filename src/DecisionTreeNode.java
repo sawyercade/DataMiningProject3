@@ -10,7 +10,7 @@ import java.util.Random;
 
 
 public class DecisionTreeNode {
-
+    private static int nodeCounter;
     private Matrix features; //the features matrix for the DecisionTree this node belongs to
     private Matrix labels; //the labels matrix for the DecisionTree this node belongs to
 
@@ -18,6 +18,8 @@ public class DecisionTreeNode {
     private DecisionTreeNode leftChild;
     private DecisionTreeNode rightChild;
     private SplitInformation splitInfo;
+    private ColumnAttributes labelAttributes;
+    private Double labelValue;
 
     public DecisionTreeNode(Matrix features, Matrix labels, List<Integer> rows){
         this.features = features;
@@ -35,8 +37,14 @@ public class DecisionTreeNode {
         }
     }
 
+    public boolean isLeaf(){
+        return this.leftChild==null && this.rightChild==null;
+    }
 
+
+    //TODO: add a way to keep from splitting on attribute values that have already been split on
     public void splitOnEntropy(int k){
+
         if (rows.size()>k && isHeterogenous()){ //if n>k and labels are heterogenous, split.
             MinMaxPriorityQueue<SplitInformation> infoPriorityQueue = MinMaxPriorityQueue.create(); //priority queue to store attribute-value-entropy data
 
@@ -62,15 +70,54 @@ public class DecisionTreeNode {
                     }
                 }
             }
-            SplitInformation minEntropySplit = infoPriorityQueue.peek(); //get the element with the smallest entropy in the priority queue
-            List<List<Integer>> splitSectionIndices = minEntropySplit.getColumnType() == ColumnAttributes.ColumnType.CATEGORICAL ? splitCategorical(minEntropySplit.getColumnIndex(), (minEntropySplit.getValue().intValue())) :  splitContinuous(minEntropySplit.getColumnIndex(), minEntropySplit.getValue());
-            this.leftChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(0));
-            this.rightChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(1));
+            this.splitInfo = infoPriorityQueue.peek(); //get the element with the smallest entropy in the priority queue
+            if(this.splitInfo.getInformation() < CalculateEntropy(this.rows, this.labels.getColumnAttributes(0))){ //if splitting is actually going to improve information, recurse
+                List<List<Integer>> splitSectionIndices = this.splitInfo.getColumnType() == ColumnAttributes.ColumnType.CATEGORICAL ? splitCategorical(this.splitInfo.getColumnIndex(), (this.splitInfo.getValue().intValue())) :  splitContinuous(this.splitInfo.getColumnIndex(), this.splitInfo.getValue());
+                this.leftChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(0));
+                this.rightChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(1));
 
-            this.leftChild.splitOnEntropy(k);
-            this.rightChild.splitOnEntropy(k);
+                this.leftChild.splitOnEntropy(k);
+                this.rightChild.splitOnEntropy(k);
+            }
+
+            this.labelAttributes = this.labels.getColumnAttributes(0);
+            this.labelValue = baselineValue(this.labels);
         }
+    }
 
+    public String treeToString(StringBuilder output, StringBuilder prefix, String parentValue){
+        if (!this.isLeaf()){
+            String attributeName = this.features.getColumnAttributes(splitInfo.getColumnIndex()).getName();
+            String valueName = this.features.getColumnAttributes(splitInfo.getColumnIndex()).getValue(splitInfo.getValue().intValue());
+
+            for (int n = 0; n + 1 < prefix.length(); n++){
+                output.append(prefix.charAt(n));
+            }
+            output.append("|\n");
+            for (int n = 0; n + 1 < prefix.length(); n++){
+                output.append(prefix.charAt(n));
+            }
+            output.append("+" + parentValue + "->Is " + attributeName + " == " + valueName + "?\n");
+            prefix.append("   |");
+            this.leftChild.treeToString(output, prefix, "Yes");
+            prefix.deleteCharAt(prefix.length() - 1);
+            prefix.append(' ');
+            this.rightChild.treeToString(output, prefix, "No");
+            prefix.delete(prefix.length()-4, prefix.length());
+        }
+        else{
+            for (int n = 0; n + 1 < prefix.length(); n++){
+                output.append(prefix.charAt(n));
+            }
+            output.append("|\n");
+            for (int n = 0; n + 1 < prefix.length(); n++){
+                output.append(prefix.charAt(n));
+            }
+            String labelVector = this.labels.getColumnAttributes(0).getValue(this.labels.getRow(this.rows.get(0)).get(0).intValue()); //get the string name of the first row's label in this.rows
+            //The above only necessarily works if this node has a size of 1.
+            output.append("+" + parentValue + "->'class'=" + labelVector +"\n");
+        }
+        return output.toString();
     }
 
     /**
@@ -163,7 +210,11 @@ public class DecisionTreeNode {
 
     private Double CalculateEntropy(List<Integer> rows, ColumnAttributes labelColumnAttributes){
         Counter<Double> counter = new Counter<Double>(); //counts the number of times each possible label attribute-value occurs
-        int numAttrValues = labelColumnAttributes.size();
+        if (rows.size()==0){
+            return Double.POSITIVE_INFINITY;
+        }
+        Double rowSize = (double)rows.size();
+
 
         //zero the counts for each possible label attribute value
         for (int i = 0; i < labelColumnAttributes.getValues().size(); i++){
@@ -177,8 +228,8 @@ public class DecisionTreeNode {
 
         Double entropy = 0.0;
         for (Map.Entry<Double, Integer> entry : counter.entries()){
-            if(entry.getValue()!=0){
-                entropy -= ((double)(entry.getValue()/numAttrValues))*(Math.log(entry.getValue()/numAttrValues)/Math.log(2));
+            if(!entry.getValue().equals(0)){
+                entropy += ((-1.0)*(entry.getValue()/rowSize))*(Math.log(entry.getValue()*1.0/rowSize)/Math.log(2.0));
             }
         }
 
@@ -193,6 +244,21 @@ public class DecisionTreeNode {
         Double nonmatchingEntropy = CalculateEntropy(sections.get(1), labels.getColumnAttributes(0));
 
         return (matchingRatio*matchingEntropy)+(nonmatchingRatio*nonmatchingEntropy);
+    }
+
+    /**
+     * Gets the most commonly occurring value in the first label column
+     * @param labels
+     * @return
+     */
+    private Double baselineValue(Matrix labels){
+        Counter<Double> counts = new Counter<Double>();
+
+        for(List<Double> row : labels.getData()){
+            counts.increment(row.get(0));
+        }
+
+        return counts.getMax();
     }
 
     //GETTERS AND SETTERS
@@ -223,6 +289,14 @@ public class DecisionTreeNode {
 
     public void setRightChild(DecisionTreeNode rightChild) {
         this.rightChild = rightChild;
+    }
+
+    public ColumnAttributes getLabelAttributes() {
+        return labelAttributes;
+    }
+
+    public void setLabelAttributes(ColumnAttributes labelAttributes) {
+        this.labelAttributes = labelAttributes;
     }
 
 }
