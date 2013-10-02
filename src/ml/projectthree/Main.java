@@ -1,3 +1,5 @@
+package ml.projectthree;
+
 import ml.ARFFParser;
 import ml.Filter;
 import ml.Imputer;
@@ -16,7 +18,7 @@ public class Main {
         final int featuresStart = 0, featuresEnd = 22;
         final int labelsStart = 22, labelsEnd = 23;
 
-        Matrix points = ARFFParser.loadARFF("G:\\Projects\\DataMiningProject3\\mushroom.arff");
+        Matrix points = ARFFParser.loadARFF(args[0]);
         Matrix features = points.subMatrixCols(featuresStart, featuresEnd);
         Matrix labels = points.subMatrixCols(labelsStart, labelsEnd);
 

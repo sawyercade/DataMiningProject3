@@ -1,3 +1,5 @@
+package ml.projectthree;
+
 import ml.ColumnAttributes;
 
 public class SplitInformation implements Comparable<SplitInformation>{

@@ -1,6 +1,10 @@
+package ml.projectthree;
+
+import ml.ColumnAttributes;
 import ml.Matrix;
 import ml.SupervisedLearner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DecisionTreeLearner extends SupervisedLearner {
@@ -23,7 +27,29 @@ public class DecisionTreeLearner extends SupervisedLearner {
 
     @Override
     public List<Double> predict(List<Double> in) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        DecisionTreeNode node = decisionTree.getRoot();
+        while (!node.isLeaf()){
+            SplitInformation splitInfo = node.getSplitInfo();
+            if (node.getSplitInfo().getColumnType()== ColumnAttributes.ColumnType.CATEGORICAL){
+                if (in.get(splitInfo.getColumnIndex()).equals(splitInfo.getValue())){
+                    node = node.getLeftChild();
+                }
+                else {
+                    node = node.getRightChild();
+                }
+            }
+            else {
+                if(in.get(splitInfo.getColumnIndex())<splitInfo.getValue() || in.get(splitInfo.getColumnIndex()).equals(splitInfo.getValue())){
+                    node = node.getLeftChild();
+                }
+                else {
+                    node = node.getRightChild();
+                }
+            }
+        }
+        List<Double> prediction = new ArrayList<Double>();
+        prediction.add(node.getSplitInfo().getValue());
+        return prediction;
     }
 
     public String getTreeString(){

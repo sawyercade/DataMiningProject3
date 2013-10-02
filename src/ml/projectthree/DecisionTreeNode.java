@@ -1,3 +1,5 @@
+package ml.projectthree;
+
 import com.google.common.collect.MinMaxPriorityQueue;
 import helpers.Counter;
 import ml.ColumnAttributes;
@@ -11,12 +13,13 @@ import java.util.Random;
 
 public class DecisionTreeNode {
     private static int nodeCounter;
-    private Matrix features; //the features matrix for the DecisionTree this node belongs to
-    private Matrix labels; //the labels matrix for the DecisionTree this node belongs to
+    private Matrix features; //the features matrix for the ml.projectthree.DecisionTree this node belongs to
+    private Matrix labels; //the labels matrix for the ml.projectthree.DecisionTree this node belongs to
 
     private List<Integer> rows; //contains column indices to the matrices that this.features and this.labels reference
     private DecisionTreeNode leftChild;
     private DecisionTreeNode rightChild;
+
     private SplitInformation splitInfo;
     private ColumnAttributes labelAttributes;
     private Double labelValue;
@@ -297,6 +300,14 @@ public class DecisionTreeNode {
 
     public void setLabelAttributes(ColumnAttributes labelAttributes) {
         this.labelAttributes = labelAttributes;
+    }
+
+    public SplitInformation getSplitInfo() {
+        return splitInfo;
+    }
+
+    public void setSplitInfo(SplitInformation splitInfo) {
+        this.splitInfo = splitInfo;
     }
 
 }

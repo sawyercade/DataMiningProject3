@@ -1,5 +1,7 @@
+package ml.projectthree;
+
+import ml.MLException;
 import ml.Matrix;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class DecisionTree {
     private DecisionTreeNode root;
@@ -21,7 +23,7 @@ public class DecisionTree {
 
     public DecisionTreeNode buildRandomTree(int k){
         this.k = k;
-        throw new NotImplementedException();
+        throw new MLException("Not Implemented yet");
     }
 
     @Override
@@ -29,6 +31,14 @@ public class DecisionTree {
         StringBuilder output = new StringBuilder();
         StringBuilder prefix = new StringBuilder();
         return this.root.treeToString(output, prefix, "");
+    }
+
+    public DecisionTreeNode getRoot() {
+        return root;
+    }
+
+    public void setRoot(DecisionTreeNode root) {
+        this.root = root;
     }
 
 }
