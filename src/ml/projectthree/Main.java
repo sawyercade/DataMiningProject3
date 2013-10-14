@@ -22,13 +22,16 @@ public class Main {
         Matrix features = points.subMatrixCols(featuresStart, featuresEnd);
         Matrix labels = points.subMatrixCols(labelsStart, labelsEnd);
 
-        DecisionTreeLearner decisionTreeLearner = new DecisionTreeLearner(k);
+        RandomDecisionTreeLearner randomDecisionTreeLearner = new RandomDecisionTreeLearner(k);
+        //EntropyReducingDecisionTreeLearner entropyReducingDecisionTreeLearner = new EntropyReducingDecisionTreeLearner(k);
 
         Imputer imputer = new Imputer();
-        Filter filter = new Filter(decisionTreeLearner, imputer, true);
+        //Filter filter = new Filter(entropyReducingDecisionTreeLearner, imputer, true);
+        Filter filter = new Filter(randomDecisionTreeLearner, imputer, true);
 
         filter.train(features, labels);
 
-        System.out.print(decisionTreeLearner.getTreeString());
+        System.out.print(randomDecisionTreeLearner.getTreeString());
+        //System.out.print(entropyReducingDecisionTreeLearner.getTreeString());
     }
 }

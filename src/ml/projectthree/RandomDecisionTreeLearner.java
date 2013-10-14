@@ -7,12 +7,14 @@ import ml.SupervisedLearner;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DecisionTreeLearner extends SupervisedLearner {
+public class RandomDecisionTreeLearner extends SupervisedLearner{
     private DecisionTree decisionTree;
-    private Matrix features, labels;
+    private Matrix features;
+
+    private Matrix labels;
     private Integer k;
 
-    public DecisionTreeLearner(Integer k){
+    public RandomDecisionTreeLearner(Integer k){
         this.k = k;
     }
 
@@ -21,8 +23,8 @@ public class DecisionTreeLearner extends SupervisedLearner {
         this.features = features;
         this.labels = labels;
 
-        decisionTree = new DecisionTree(features, labels);
-        decisionTree.buildEntropyReducingTree(this.k);
+        this.decisionTree = new DecisionTree(features, labels);
+        this.decisionTree.buildRandomTree(k);
     }
 
     @Override
@@ -52,11 +54,11 @@ public class DecisionTreeLearner extends SupervisedLearner {
         return prediction;
     }
 
+    //GETTERS AND SETTERS
     public String getTreeString(){
         return decisionTree.toString();
     }
 
-    //GETTERS AND SETTERS
     public DecisionTree getDecisionTree() {
         return decisionTree;
     }

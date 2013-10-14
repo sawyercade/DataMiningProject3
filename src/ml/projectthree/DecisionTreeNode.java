@@ -3,6 +3,7 @@ package ml.projectthree;
 import com.google.common.collect.MinMaxPriorityQueue;
 import helpers.Counter;
 import ml.ColumnAttributes;
+import ml.MLException;
 import ml.Matrix;
 
 import java.util.ArrayList;
@@ -85,6 +86,36 @@ public class DecisionTreeNode {
 
             this.labelAttributes = this.labels.getColumnAttributes(0);
             this.labelValue = baselineValue(this.labels);
+        }
+    }
+
+    public void splitRandom(int k){
+        //if n>k and labels are heterogenous, split.
+        if (rows.size()>k && isHeterogenous()){
+            Random random = new Random(System.currentTimeMillis()); //seed a random number generator using current time
+            boolean foundSplit = false;
+            while (!foundSplit){
+                int randColumn = random.nextInt(features.getNumCols()); //get a random column index
+                if (features.getColumnAttributes(randColumn).getColumnType()== ColumnAttributes.ColumnType.CATEGORICAL){ //if the column is categorical
+                    int randValue = random.nextInt(features.getColumnAttributes(randColumn).getValues().size()); //choose a random value from that column
+                    List<List<Integer>> splitSectionIndices = splitCategorical(randColumn, randValue);
+                    if (splitSectionIndices.get(0).size()>0 && splitSectionIndices.get(1).size()>0){ //if this split does not result in an empty child
+                        this.splitInfo = new SplitInformation(ColumnAttributes.ColumnType.CATEGORICAL, randColumn, (double)randValue, Matrix.UNKNOWN_VALUE);
+                        this.leftChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(0));
+                        this.rightChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(1));
+
+                        this.leftChild.splitRandom(k);
+                        this.rightChild.splitRandom(k);
+
+                        this.labelAttributes = this.labels.getColumnAttributes(0);
+                        this.labelValue = baselineValue(this.labels);
+                        foundSplit = true; //exit the while loop
+                    }
+                }
+                else {
+                    throw new MLException("Support for random divisions on continuous features has not been added yet");
+                }
+            }
         }
     }
 

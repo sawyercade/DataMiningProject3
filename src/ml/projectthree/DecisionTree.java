@@ -23,7 +23,8 @@ public class DecisionTree {
 
     public DecisionTreeNode buildRandomTree(int k){
         this.k = k;
-        throw new MLException("Not Implemented yet");
+        this.root.splitRandom(this.k);
+        return this.root;
     }
 
     @Override
