@@ -85,7 +85,7 @@ public class DecisionTreeNode {
             }
 
             this.labelAttributes = this.labels.getColumnAttributes(0);
-            this.labelValue = baselineValue(this.labels);
+            this.labelValue = baselineValue(this.rows);
         }
     }
 
@@ -100,7 +100,7 @@ public class DecisionTreeNode {
                     int randValue = random.nextInt(features.getColumnAttributes(randColumn).getValues().size()); //choose a random value from that column
                     List<List<Integer>> splitSectionIndices = splitCategorical(randColumn, randValue);
                     if (splitSectionIndices.get(0).size()>0 && splitSectionIndices.get(1).size()>0){ //if this split does not result in an empty child
-                        this.splitInfo = new SplitInformation(ColumnAttributes.ColumnType.CATEGORICAL, randColumn, (double)randValue, Matrix.UNKNOWN_VALUE);
+                        this.splitInfo = new SplitInformation(ColumnAttributes.ColumnType.CATEGORICAL, randColumn, (double)randValue, Matrix.UNKNOWN_VALUE); //don't care about entropy/info
                         this.leftChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(0));
                         this.rightChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(1));
 
@@ -108,12 +108,26 @@ public class DecisionTreeNode {
                         this.rightChild.splitRandom(k);
 
                         this.labelAttributes = this.labels.getColumnAttributes(0);
-                        this.labelValue = baselineValue(this.labels);
+                        this.labelValue = baselineValue(this.rows);
                         foundSplit = true; //exit the while loop
                     }
                 }
                 else {
-                    throw new MLException("Support for random divisions on continuous features has not been added yet");
+                    int randRow = this.rows.get(random.nextInt(this.rows.size())); //get a random row
+                    double splitValue = features.getRow(randRow).get(randColumn); //get the value of features[randRow][randColumn]
+                    List<List<Integer>> splitSectionIndices = splitContinuous(randColumn, splitValue); //split
+                    if (splitSectionIndices.get(0).size()>0 && splitSectionIndices.get(1).size()>0){ //if this split does not result in an empty child
+                        this.splitInfo = new SplitInformation(ColumnAttributes.ColumnType.CONTINUOUS, randColumn, splitValue, Matrix.UNKNOWN_VALUE);
+                        this.leftChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(0));
+                        this.rightChild = new DecisionTreeNode(features, labels, splitSectionIndices.get(1));
+
+                        this.leftChild.splitRandom(k);
+                        this.rightChild.splitRandom(k);
+
+                        this.labelAttributes = this.labels.getColumnAttributes(0);
+                        this.labelValue = baselineValue(this.rows);
+                        foundSplit = true; //exit the while loop
+                    }
                 }
             }
         }
@@ -282,17 +296,29 @@ public class DecisionTreeNode {
 
     /**
      * Gets the most commonly occurring value in the first label column
-     * @param labels
+     * @param rows
      * @return
      */
-    private Double baselineValue(Matrix labels){
-        Counter<Double> counts = new Counter<Double>();
+    private Double baselineValue(List<Integer> rows){
+        if(labels.getColumnAttributes(0).getColumnType()==ColumnAttributes.ColumnType.CATEGORICAL){ //calculate mode
+            Counter<Double> counts = new Counter<Double>();
 
-        for(List<Double> row : labels.getData()){
-            counts.increment(row.get(0));
+            for(Integer rowIndex : rows){
+                counts.increment(labels.getData().get(rowIndex).get(0));
+            }
+
+            return counts.getMax();
         }
+        else { //calculate mean
+            int count = 0;
+            Double value = 0.0;
 
-        return counts.getMax();
+            for (Integer rowIndex : rows){
+                count++;
+                value += labels.getData().get(rowIndex).get(0);
+            }
+            return value/count;
+        }
     }
 
     //GETTERS AND SETTERS
